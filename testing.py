@@ -4,6 +4,7 @@
 
 import torch
 import matplotlib.pyplot as plt
+from sklearn.linear_model import lasso_path
 
 from layers import L1Linear
 from lasso import TorchLasso
@@ -28,7 +29,7 @@ M.weight_u
 
 M(X)
 
-#%%
+#%% solve Lasso with Pytorch
 
 p = 20 # variables
 N = 100 # samples
@@ -46,9 +47,13 @@ y = X @ beta + noise*torch.randn(N,1)
 l1 = 0.0001
 batch_size = 10
 
-model, info, iterates = TorchLasso(X, y, l1, bias=False, n_epochs=30, batch_size=10, store_iterates=True)
+model, info, iterates = TorchLasso(X, y, l1, bias=False, n_epochs=50, batch_size=10, store_iterates=True)
 
 sol = model.get_weight()
+
+#%% compute Lasso path
+
+alphas, coef_path, _ = lasso_path(X.numpy(), y.numpy().reshape(-1), alphas=None)
 
 #%%
 
@@ -63,6 +68,10 @@ ax.legend()
 
 #%%
 
-fig, ax = plt.subplots()
-ax.plot(iterates)
-ax.set_xlabel('Epoch')
+fig, axs = plt.subplots(1,2)
+axs[0].plot(iterates)
+axs[0].set_xlabel('Epoch')
+
+axs[1].plot(alphas, coef_path.T, '-o', markersize = 0.8)
+axs[1].set_xscale('log')
+axs[1].set_xlabel('log(Lambda)')
