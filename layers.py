@@ -1,7 +1,8 @@
 """
 @author: Fabian Schaipp
 
-using the conventions from torch.Linear
+using the conventions from torch.Linear, see 
+    https://pytorch.org/docs/stable/generated/torch.nn.Linear.html?highlight=linear#torch.nn.Linear
 """
 import warnings
 
@@ -16,7 +17,7 @@ from torch.nn import init
 class L1Linear(torch.nn.Module):
     
 
-    def __init__(self, l1 : float, in_features: int, out_features: int, bias: bool = True,
+    def __init__(self, l1: float, in_features: int, out_features: int, bias: bool = True,
                  device=None, dtype=None) -> None:
         """Applies a linear transformation to the incoming data: :math:`y = xA^T + b`
            where A is l1-penalized, using the reformulation from
@@ -29,10 +30,9 @@ class L1Linear(torch.nn.Module):
             l1: float, regularization parameter
             in_features: size of each input sample
             out_features: size of each output sample
-            bias: If set to ``False``, the layer will not learn an additive bias.
+            bias: If set to ``False``, the layer will not learn an additive bias. The bias is not regularized.
                 Default: ``True``
         
-        TBD
         Shape:
             - Input: :math:`(*, H_{in})` where :math:`*` means any number of
               dimensions including none and :math:`H_{in} = \text{in\_features}`.
@@ -40,7 +40,11 @@ class L1Linear(torch.nn.Module):
               are the same shape as the input and :math:`H_{out} = \text{out\_features}`.
     
         Attributes:
-            weight: the learnable weights of the module of shape
+            weight_u: the learnable weights of the module of shape
+                :math:`(\text{out\_features}, \text{in\_features})`. The values are
+                initialized from :math:`\mathcal{U}(-\sqrt{k}, \sqrt{k})`, where
+                :math:`k = \frac{1}{\text{in\_features}}`
+            weight_v: the learnable weights of the module of shape
                 :math:`(\text{out\_features}, \text{in\_features})`. The values are
                 initialized from :math:`\mathcal{U}(-\sqrt{k}, \sqrt{k})`, where
                 :math:`k = \frac{1}{\text{in\_features}}`
@@ -48,7 +52,9 @@ class L1Linear(torch.nn.Module):
                     If :attr:`bias` is ``True``, the values are initialized from
                     :math:`\mathcal{U}(-\sqrt{k}, \sqrt{k})` where
                     :math:`k = \frac{1}{\text{in\_features}}`
-    
+        
+        The weights of the linear transformation A can be retrieved by ``self.weight_u.mul(self.weight_v)``.
+        
         Examples::
     
             TBD
@@ -63,7 +69,7 @@ class L1Linear(torch.nn.Module):
         self.l1 = l1
         self.in_features = in_features
         self.out_features = out_features
-        self.weight_u = Parameter(torch.empty((out_features, in_features), **factory_kwargs))
+        self.weight_u = Parameter(torch.zeros((out_features, in_features), **factory_kwargs))
         self.weight_v = Parameter(torch.empty((out_features, in_features), **factory_kwargs))
         
         if bias:
@@ -93,7 +99,7 @@ class L1Linear(torch.nn.Module):
         # Setting a=sqrt(5) in kaiming_uniform is the same as initializing with
         # uniform(-1/sqrt(in_features), 1/sqrt(in_features)). For details, see
         # https://github.com/pytorch/pytorch/issues/57109
-        init.kaiming_uniform_(self.weight_u, a=math.sqrt(5))
+        #init.kaiming_uniform_(self.weight_u, a=math.sqrt(5))
         init.kaiming_uniform_(self.weight_v, a=math.sqrt(5))
         
         if self.bias is not None:
