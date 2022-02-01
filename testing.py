@@ -9,6 +9,7 @@ from sklearn.linear_model import lasso_path, Lasso
 from layers import L1Linear
 from lasso import TorchLasso
 
+
 #%%
 b = 5 # batch size
 n = 10 # input size
@@ -49,10 +50,10 @@ alphas, coef_path, _ = lasso_path(X.numpy(), y.numpy().reshape(-1), alphas=None)
 
 #%%
 
-l1 = alphas.min() # factor 2 comes from diff. obj in scikit
+l1 = 2*alphas.min() # factor 2 comes from diff. obj in scikit
 batch_size = 10
 
-model, info, iterates = TorchLasso(X, y, l1, bias=False, n_epochs=90, lr = 0.01, batch_size=batch_size, store_iterates=True)
+model, info, iterates = TorchLasso(X, y, l1, bias=False, n_epochs=110, lr = 0.01, batch_size=batch_size, store_iterates=True)
 
 sol = model.get_weight()
 
