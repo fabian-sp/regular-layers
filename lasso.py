@@ -23,7 +23,7 @@ class LassoDataset(Dataset):
     
 
 def TorchLasso(X: torch.tensor, y: torch.tensor, l1: float, opt: torch.optim.Optimizer = None, bias: bool = True,\
-               verbose: bool = False, n_epochs: int = 2, batch_size: int = 1, store_iterates: bool = False):
+               verbose: bool = False, n_epochs: int = 2, lr:float = 0.01, batch_size: int = 1, store_iterates: bool = False):
     """
 
     Parameters
@@ -42,6 +42,8 @@ def TorchLasso(X: torch.tensor, y: torch.tensor, l1: float, opt: torch.optim.Opt
         DESCRIPTION. The default is False.
     n_epochs : int, optional
         DESCRIPTION. The default is 2.
+    lr : float, optional
+        learning rate. The default is 1e-2
     batch_size : int, optional
         DESCRIPTION. The default is 1.
     store_iterates : bool, optional
@@ -60,18 +62,14 @@ def TorchLasso(X: torch.tensor, y: torch.tensor, l1: float, opt: torch.optim.Opt
     
     ds = LassoDataset(X, y)
     dl = DataLoader(ds, batch_size = batch_size, shuffle = False)
-    
-    dataiter = iter(dl)
-    inputs, targets = dataiter.next()
 
     model = L1Linear(l1=l1, in_features=p, out_features=1)
+    print(model.get_weight())
     
-    if opt is None:
-        opt = torch.optim.SGD(model.parameters(), lr = 0.01)
+    opt = torch.optim.SGD(model.parameters(), lr = lr)
         
     iterates = list()   
     info = {'train_loss':[], 'lsq_loss':[], 'reg':[]}
-    
     
     loss = torch.nn.MSELoss()
     
