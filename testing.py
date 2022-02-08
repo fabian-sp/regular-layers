@@ -27,9 +27,9 @@ M(X)
 
 #%% solve Lasso with Pytorch
 
-p = 20 # variables
+p = 30 # variables
 N = 100 # samples
-k = 5 # nonzeros
+k = 10 # nonzeros
 noise = 0.00
 
 
@@ -73,7 +73,9 @@ ax.legend()
 fig, axs = plt.subplots(1,2)
 axs[0].plot(iterates)
 axs[0].set_xlabel('Epoch')
+axs[0].set_title("TorchLasso iterate path")
 
 axs[1].plot(alphas, coef_path.T, '-o', markersize = 0.8)
 axs[1].set_xscale('log')
 axs[1].set_xlabel('log(Lambda)')
+axs[1].set_title("Lasso path")
