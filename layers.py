@@ -98,6 +98,9 @@ class L1Linear(torch.nn.Module):
     def get_weight(self):
         return self.weight_u.mul(self.weight_v)
     
+    def get_tol(self):
+        return torch.max(torch.abs(torch.abs(self.weight_u)-torch.abs(self.weight_v)))
+    
     ####
     def reset_parameters(self) -> None:
         # Setting a=sqrt(5) in kaiming_uniform is the same as initializing with

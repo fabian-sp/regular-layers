@@ -27,7 +27,7 @@ def TorchLasso(X: torch.tensor, y: torch.tensor, l1: float, opt: torch.optim.Opt
     """
     For :math:`X\\in\\mathbb{R}^{N\\times p}`, solves (if bias=True)
     
-        min_{w,w0}  1/(2*N) * ||Xw + w0 -y||^2 + l1*||w||_1
+        min_{w,w0}  1/N * ||Xw + w0 -y||^2 + l1*||w||_1
         
     Parameters
     ----------
@@ -66,48 +66,52 @@ def TorchLasso(X: torch.tensor, y: torch.tensor, l1: float, opt: torch.optim.Opt
     ds = LassoDataset(X, y)
     dl = DataLoader(ds, batch_size=batch_size, shuffle=False)
     
-    # loss has factor 1/N --> use 2*l1 for penalty
     model = L1Linear(l1=2*l1, in_features=p, out_features=1)
     
-    opt = torch.optim.SGD(model.parameters(), lr=lr)
-        
+    # weight_decay/2 * (||u||^2+||v||^2) 
+    opt = torch.optim.SGD(model.parameters(), lr=lr, weight_decay=l1)
+    
     iterates = list()   
-    info = {'train_loss':[], 'lsq_loss':[], 'reg':[]}
+    info = {'train_loss':[], 'lsq_loss':[], 'reg':[], 'tol':[]}
     
     loss = torch.nn.MSELoss()
     
     for j in torch.arange(n_epochs):
         ################### SETUP FOR EPOCH ##################
-        all_loss = list(); all_lsq = list(); all_reg = list()
+        all_loss = list(); all_lsq = list(); all_reg = list(); all_tol = list()
         ################### START OF EPOCH ###################
         model.train()
         for inputs, targets in dl:
             
+            # zero gradients
+            opt.zero_grad()    
             # forward pass
             y_pred = model.forward(inputs)
             # compute loss
             lsq = loss(y_pred, targets) # =1/N ||Xw-y||^2
-            pen = model.reg() # =2*l1 ||w||_1
-            loss_val = lsq + pen            
-            # zero gradients
-            opt.zero_grad()    
             # backward pass
-            loss_val.backward()    
+            lsq.backward()    
             # iteration
             opt.step()
             
-            all_loss.append(loss_val.item())
+            with torch.no_grad():
+                pen = model.reg() # = l1 ||w||_1
+            
+            all_loss.append(lsq.item()+pen.item())
             all_lsq.append(lsq.item())
             all_reg.append(pen.item())
+            all_tol.append(model.get_tol().item())
             
-            if store_iterates:
-                iterates.append(model.get_weight())
+            
         ################### END OF EPOCH ###################
-        
+        if store_iterates:
+            iterates.append(model.get_weight())
+                
         ### STORE
         info['train_loss'].append(np.mean(all_loss))
         info['lsq_loss'].append(np.mean(all_lsq))
         info['reg'].append(np.mean(all_reg))
+        info['tol'].append(np.mean(all_tol))
         
         if verbose:
             print(f"Epoch {j+1}/{n_epochs}: \t  train loss: {np.mean(all_loss)}.")
