@@ -17,10 +17,14 @@ from torch.nn import init
 class L1Linear(torch.nn.Module):
     
 
-    def __init__(self, l1: float, in_features: int, out_features: int, bias: bool = True,
+    def __init__(self, l1: float, in_features: int, out_features: int, bias: bool=True,
                  device=None, dtype=None) -> None:
-        """Applies a linear transformation to the incoming data: :math:`y = xA^T + b`
-           where A is l1-penalized, using the reformulation from
+        """Applies a linear transformation to the incoming data: :math:`y = xW^T + b`
+           where the weights of :math:`W` are l1-penalized, i.e. with the term
+               
+           l1 * ||W||_1
+           
+           The penalty is applied using the reformulation from
             
              Equivalences Between Sparse Models and Neural Networks, Ryan Tibshirani, 2021.
 
@@ -53,7 +57,7 @@ class L1Linear(torch.nn.Module):
                     :math:`\mathcal{U}(-\sqrt{k}, \sqrt{k})` where
                     :math:`k = \frac{1}{\text{in\_features}}`
         
-        The weights of the linear transformation A can be retrieved by ``self.weight_u.mul(self.weight_v)``.
+        The weights of the linear transformation :math:`W` can be retrieved by ``self.weight_u.mul(self.weight_v)``.
         
         Examples::
     
@@ -87,9 +91,9 @@ class L1Linear(torch.nn.Module):
     ### Custom methods
     def reg(self):
         """
-        compute l1 * ||W||_1 = l1* (||W_u||^2 + ||W_v||^2)
+        compute l1 * ||W||_1 = (l1/2)* (||W_u||^2 + ||W_v||^2)
         """
-        return self.l1 * (torch.linalg.norm(self.weight_u)**2 + torch.linalg.norm(self.weight_u)**2)
+        return (self.l1/2) * (torch.linalg.norm(self.weight_u)**2 + torch.linalg.norm(self.weight_u)**2)
     
     def get_weight(self):
         return self.weight_u.mul(self.weight_v)

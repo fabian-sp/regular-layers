@@ -50,10 +50,10 @@ alphas, coef_path, _ = lasso_path(X.numpy(), y.numpy().reshape(-1), alphas=None)
 
 #%%
 
-l1 = 2*alphas.min() # factor 2 comes from diff. obj in scikit
+l1 = alphas.min() # TorchLasso and scikit have equivalent formulation (i.e. alpha=l1)
 batch_size = 10
 
-model, info, iterates = TorchLasso(X, y, l1, bias=False, n_epochs=110, lr = 0.01, batch_size=batch_size, store_iterates=True)
+model, info, iterates = TorchLasso(X, y, l1, bias=False, n_epochs=110, lr=0.01, batch_size=batch_size, store_iterates=True)
 
 sol = model.get_weight()
 
@@ -79,3 +79,4 @@ axs[1].plot(alphas, coef_path.T, '-o', markersize = 0.8)
 axs[1].set_xscale('log')
 axs[1].set_xlabel('log(Lambda)')
 axs[1].set_title("Lasso path")
+axs[1].set_ylim(axs[0].get_ylim())

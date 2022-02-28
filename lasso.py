@@ -22,30 +22,33 @@ class LassoDataset(Dataset):
         return x, y
     
 
-def TorchLasso(X: torch.tensor, y: torch.tensor, l1: float, opt: torch.optim.Optimizer = None, bias: bool = True,\
-               verbose: bool = False, n_epochs: int = 2, lr:float = 0.01, batch_size: int = 1, store_iterates: bool = False):
+def TorchLasso(X: torch.tensor, y: torch.tensor, l1: float, opt: torch.optim.Optimizer=None, bias: bool=True,\
+               verbose: bool=False, n_epochs: int=2, lr:float=0.01, batch_size: int=1, store_iterates: bool=False):
     """
-
+    For :math:`X\\in\\mathbb{R}^{N\\times p}`, solves (if bias=True)
+    
+        min_{w,w0}  1/(2*N) * ||Xw + w0 -y||^2 + l1*||w||_1
+        
     Parameters
     ----------
     X : torch.tensor
-        DESCRIPTION.
+        Coefficient matrix.
     y : torch.tensor
-        DESCRIPTION.
+        Targets.
     l1 : float
-        DESCRIPTION.
+        Regularization parameter.
     opt : torch.optim.Optimizer, optional
         Optimizer. The default is SGD.
     bias : bool, optional
-        DESCRIPTION. The default is True.
+        Allow bias for layer. The default is True.
     verbose : bool, optional
-        DESCRIPTION. The default is False.
+        Verbosity. The default is False.
     n_epochs : int, optional
-        DESCRIPTION. The default is 2.
+        Number of epochs. The default is 2.
     lr : float, optional
         learning rate. The default is 1e-2
     batch_size : int, optional
-        DESCRIPTION. The default is 1.
+        batch size. The default is 1.
     store_iterates : bool, optional
         Whether to store the iterates. The default is False.
 
@@ -61,12 +64,12 @@ def TorchLasso(X: torch.tensor, y: torch.tensor, l1: float, opt: torch.optim.Opt
     N = X.shape[0]
     
     ds = LassoDataset(X, y)
-    dl = DataLoader(ds, batch_size = batch_size, shuffle = False)
-
-    model = L1Linear(l1=l1, in_features=p, out_features=1)
-    print(model.get_weight())
+    dl = DataLoader(ds, batch_size=batch_size, shuffle=False)
     
-    opt = torch.optim.SGD(model.parameters(), lr = lr)
+    # loss has factor 1/N --> use 2*l1 for penalty
+    model = L1Linear(l1=2*l1, in_features=p, out_features=1)
+    
+    opt = torch.optim.SGD(model.parameters(), lr=lr)
         
     iterates = list()   
     info = {'train_loss':[], 'lsq_loss':[], 'reg':[]}
@@ -83,8 +86,8 @@ def TorchLasso(X: torch.tensor, y: torch.tensor, l1: float, opt: torch.optim.Opt
             # forward pass
             y_pred = model.forward(inputs)
             # compute loss
-            lsq = loss(y_pred, targets)
-            pen = model.reg()
+            lsq = loss(y_pred, targets) # =1/N ||Xw-y||^2
+            pen = model.reg() # =2*l1 ||w||_1
             loss_val = lsq + pen            
             # zero gradients
             opt.zero_grad()    
