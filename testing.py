@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.linear_model import lasso_path, Lasso
 
-from layers import L1Linear
+from layers import L1Linear, LowRankLinear
 from lasso import TorchLasso
 
 
@@ -19,6 +19,8 @@ m = 3 # output size
 X = torch.randn(b,n)
 
 M = L1Linear(l1=0.1, in_features=n, out_features=m, bias=False)
+M = LowRankLinear(l1=0.1, in_features=n, out_features=m, bias=False)
+
 
 M.weight_u
 
