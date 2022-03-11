@@ -117,7 +117,7 @@ class L1Linear(torch.nn.Module):
 
 
     def extra_repr(self) -> str:
-        return 'l1 = {}, in_features={}, out_features={}, bias={}'.format(
+        return 'l1={}, in_features={}, out_features={}, bias={}'.format(
             self.l1, self.in_features, self.out_features, self.bias is not None
         )
     
@@ -222,6 +222,6 @@ class LowRankLinear(torch.nn.Module):
 
 
     def extra_repr(self) -> str:
-        return 'l1 = {}, in_features={}, out_features={}, bias={}'.format(
+        return 'l1={}, in_features={}, out_features={}, bias={}'.format(
             self.l1, self.in_features, self.out_features, self.bias is not None
         )
