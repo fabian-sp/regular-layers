@@ -18,7 +18,7 @@ class L1Linear(torch.nn.Module):
     
 
     def __init__(self, l1: float, in_features: int, out_features: int, bias: bool=True,
-                 device=None, dtype=None) -> None:
+                 init_zero=False, device=None, dtype=None) -> None:
         """Applies a linear transformation to the incoming data: :math:`y = xW^T + b`
            where the weights of :math:`W` are l1-penalized, i.e. with the term
                
@@ -57,7 +57,7 @@ class L1Linear(torch.nn.Module):
                 If :attr:`bias` is ``True``, the values are initialized from
                 :math:`\mathcal{U}(-\sqrt{k}, \sqrt{k})` where
                 :math:`k = \frac{1}{\text{in\_features}}`
-        
+            init_zero: whether to initialize one of the weights at zero.
         
         Examples::
     
@@ -80,8 +80,8 @@ class L1Linear(torch.nn.Module):
             self.bias = Parameter(torch.empty(out_features, **factory_kwargs))
         else:
             self.register_parameter('bias', None)
-            
-        self.reset_parameters()
+        
+        self.reset_parameters(init_zero)
         
         return
 
@@ -103,11 +103,13 @@ class L1Linear(torch.nn.Module):
         return torch.max(torch.abs(torch.abs(self.weight_u)-torch.abs(self.weight_v)))
     
     ####
-    def reset_parameters(self) -> None:
+    def reset_parameters(self, init_zero=False) -> None:
         # Setting a=sqrt(5) in kaiming_uniform is the same as initializing with
         # uniform(-1/sqrt(in_features), 1/sqrt(in_features)). For details, see
         # https://github.com/pytorch/pytorch/issues/57109
-        #init.kaiming_uniform_(self.weight_u, a=math.sqrt(5))
+        
+        if not init_zero:
+            init.kaiming_uniform_(self.weight_u, a=math.sqrt(5))
         init.kaiming_uniform_(self.weight_v, a=math.sqrt(5))
         
         if self.bias is not None:
@@ -126,7 +128,7 @@ class L1Linear(torch.nn.Module):
 class LowRankLinear(torch.nn.Module):
     
     def __init__(self, l1: float, in_features: int, out_features: int, bias: bool=True,
-                 device=None, dtype=None) -> None:
+                 init_zero=False, device=None, dtype=None) -> None:
         """Applies a linear transformation to the incoming data: :math:`y = xW^T + b`
            where the weights of :math:`W` are penalized with the nuclear norm, i.e. with the term
                
@@ -165,7 +167,7 @@ class LowRankLinear(torch.nn.Module):
                 If :attr:`bias` is ``True``, the values are initialized from
                 :math:`\mathcal{U}(-\sqrt{k}, \sqrt{k})` where
                 :math:`k = \frac{1}{\text{in\_features}}`
-        
+            init_zero: whether to initialize one of the weights at zero.
         
         Examples::
     
@@ -190,7 +192,7 @@ class LowRankLinear(torch.nn.Module):
         else:
             self.register_parameter('bias', None)
             
-        self.reset_parameters()
+        self.reset_parameters(init_zero)
         
         return
 
@@ -208,11 +210,13 @@ class LowRankLinear(torch.nn.Module):
         return self.weight_u @ self.weight_v.T
     
     ####
-    def reset_parameters(self) -> None:
+    def reset_parameters(self, init_zero=False) -> None:
         # Setting a=sqrt(5) in kaiming_uniform is the same as initializing with
         # uniform(-1/sqrt(in_features), 1/sqrt(in_features)). For details, see
         # https://github.com/pytorch/pytorch/issues/57109
-        #init.kaiming_uniform_(self.weight_u, a=math.sqrt(5))
+        
+        if not init_zero:
+            init.kaiming_uniform_(self.weight_u, a=math.sqrt(5))
         init.kaiming_uniform_(self.weight_v, a=math.sqrt(5))
         
         if self.bias is not None:

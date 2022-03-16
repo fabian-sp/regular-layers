@@ -66,7 +66,7 @@ def TorchLasso(X: torch.tensor, y: torch.tensor, l1: float, opt: torch.optim.Opt
     ds = LassoDataset(X, y)
     dl = DataLoader(ds, batch_size=batch_size, shuffle=False)
     
-    model = L1Linear(l1=l1, in_features=p, out_features=1)
+    model = L1Linear(l1=l1, in_features=p, out_features=1, init_zero=True)
     
     # weight_decay/2 * (||u||^2+||v||^2) 
     opt = torch.optim.SGD(model.parameters(), lr=lr, weight_decay=l1)
