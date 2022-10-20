@@ -71,7 +71,7 @@ def TorchLasso(X: torch.tensor, y: torch.tensor, l1: float, opt: torch.optim.Opt
     # weight_decay/2 * (||u||^2+||v||^2) 
     opt = torch.optim.SGD(model.parameters(), lr=lr, weight_decay=l1)
     
-    iterates = list()   
+    iterates = list()
     info = {'train_loss':[], 'lsq_loss':[], 'reg':[], 'tol':[]}
     
     loss = torch.nn.MSELoss()
@@ -105,7 +105,8 @@ def TorchLasso(X: torch.tensor, y: torch.tensor, l1: float, opt: torch.optim.Opt
             
         ################### END OF EPOCH ###################
         if store_iterates:
-            iterates.append(model.get_weight())
+            tmp = {'u': model.weight_u.clone().detach().numpy(), 'v': model.weight_v.clone().detach().numpy()}
+            iterates.append(tmp)
                 
         ### STORE
         info['train_loss'].append(np.mean(all_loss))
@@ -117,7 +118,5 @@ def TorchLasso(X: torch.tensor, y: torch.tensor, l1: float, opt: torch.optim.Opt
             print(f"Epoch {j+1}/{n_epochs}: \t  train loss: {np.mean(all_loss)}.")
             print(opt)    
     
-    if store_iterates:
-        iterates = torch.concat(iterates).detach().numpy()
     
     return model, info, iterates

@@ -35,14 +35,22 @@ alphas, coef_path, _ = lasso_path(X.numpy(), y.numpy().reshape(-1), alphas=None)
 l1 = 2*alphas.min()
 #l1 = 0.5
 batch_size = 10
+n_epochs = 200
 
-model, info, iterates = TorchLasso(X, y, l1, bias=False, n_epochs=200, lr=0.05, batch_size=batch_size, store_iterates=True)
-
+model, info, iterates = TorchLasso(X, y, l1, bias=False, n_epochs=n_epochs, lr=0.05, batch_size=batch_size, store_iterates=True)
 sol = model.get_weight()
 
 # scikit has factor 1/2N --> scale l1
 sk = Lasso(l1/2, fit_intercept=False).fit(X.numpy(), y.numpy())
 sk.coef_
+
+# construct beta iterates
+beta_hist = list()
+for j in range(n_epochs):
+    u,v = iterates[j].values()
+    beta_hist.append(u*v)
+
+beta_hist = np.vstack(beta_hist)
 
 both_sol = np.vstack((sk.coef_, sol.detach().numpy())).T
 
@@ -59,10 +67,10 @@ ax.set_yscale('log')
 ax.set_xlabel('Epoch')
 ax.legend()
 
-#%%
+#%% plot Lasso path and iterate path
 
 fig, axs = plt.subplots(1,2)
-axs[0].plot(iterates)
+axs[0].plot(beta_hist)
 axs[0].set_xlabel('Epoch')
 axs[0].set_title("TorchLasso iterate path")
 
@@ -71,3 +79,18 @@ axs[1].set_xscale('log')
 axs[1].set_xlabel('log(l1)')
 axs[1].set_title("Lasso path")
 axs[1].set_ylim(axs[0].get_ylim())
+
+
+#%% plot iterate
+
+fig, ax = plt.subplots()
+
+for j in range(n_epochs):
+    u,v = iterates[j].values()
+    ax.plot(u, v, lw=0.1, ls='-', marker='o', markersize=1, c='grey')
+
+
+
+
+
+
